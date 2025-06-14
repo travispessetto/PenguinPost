@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
+
+:root {
+	--fawn: #EDAE72ff;
+	--sunset: #E3CA9Bff;
+	--chestnut: #B14D35ff;
+	--chamoisee: #B37C59ff;
+	--bole: #743F2Aff;
+	--columbia-blue: #D2EFFFff;
+}
+
+body,html
+{
+	width: 100vw;
+	height: 100vh;
+	padding: 0px;
+	margin: 0px;
+	font-family: 'Roboto', sans-serif;
+}
+
+div#main
+{
+	display: flex;
+	flex-direction: column;
+	background: var(--sunset);
+	height: 100vh;
+}
+
+div#header
+{
+	background: black;
+	color: white;
+	padding: 0px 5px;
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: row;
+}
+
+div#body
+{
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: row;
+	overflow: hidden;
+}
+
+div#side
+{
+	height: 100%;
+	max-width: 4in;
+	overflow: hidden;
+	justify-content: center;
+	align-items: center;
+	display: flex;
+}
+
+div#side > img
+{
+	height: 100%;
+}
+
+div#contacts
+{
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	overflow: hidden;
+}
+
+div#contact-header
+{
+	background: var(--columbia-blue);
+	flex: 0 1 auto;
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+div.contact, div#contact-header
+{
+  width: 100%;
+	display: flex;
+	flex-direction: row;
+}
+
+div#contact-header > div
+{
+	background: var(--columbia-blue);
+	font-weight: bold;
+}
+
+div#contact-header > div, div.contact > div
+{
+	padding: .5em;
+	flex: 0 0 25%;
+	border-right: 1px solid black;
+  box-sizing: border-box;
+}
+
+div.contact:odd
+{
+	background: var(--sunset);
+}
+
+div#contact-body
+{
+	flex: 1 1 auto;
+	overflow-y: scroll;
+}

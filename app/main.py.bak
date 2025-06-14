@@ -1,0 +1,93 @@
+import os
+import csv
+import webview
+from helpers.EnvelopePrinter import EnvelopePrinter
+
+class Api:
+    def greet_user(self, name):
+        return f"Hello, {name}!"
+    
+    def print_envelope(self,contact):
+        envelopePrinter = EnvelopePrinter()
+        printers = envelopePrinter.list_printers()
+        if not printers:
+            raise RuntimeError("No printers found.")
+        printer_index = 0  # Default to the first printer
+        if not (0 <= printer_index < len(printers)):
+            raise IndexError(f"Invalid printer index: {printer_index}")
+        sender = [
+            "Travis Pessetto",
+            "123 Penguin Ln",
+            "Suite 7",
+            "Anchorage, AK 99501"
+        ]
+
+
+        #recipient = [
+        #    contact.get("name",""),
+        #    contact.get("street1",""),
+        #    contact.get("street2",""),
+        #    contact.get("city",""),
+        #    contact.get("state",""),
+        #    contact.get("zip","")
+        #]
+
+        envelopePrinter.generate_and_print(sender,contact)
+
+    def submit_contact(self, contact):
+        filename = "contacts.csv"
+        fields= ["name", "street1", "street2", "city", "state", "zip"]
+        # Check if the file exists
+
+        with open(filename, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            row = [contact.get(field,"") for field in fields]
+            writer.writerow(row)
+
+    def get_contacts(self):
+        filename = "contacts.csv"
+        contacts = []
+        if not os.path.exists(filename):
+            return contacts
+
+        with open(filename, mode='r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if len(row) >= 6:
+                    contact = {
+                        "name": row[0],
+                        "street1": row[1],
+                        "street2": row[2],
+                        "city": row[3],
+                        "state": row[4],
+                        "zip": row[5]
+                    }
+                    contacts.append(contact)
+        return contacts 
+
+    def preview_envelope(self, contact):
+        envelopePrinter = EnvelopePrinter()
+        sender = [
+            "Travis Pessetto",
+            "123 Penguin Ln",
+            "Suite 7",
+            "Anchorage, AK 99501"
+        ]
+        #recipient = [
+        #    contact.get("name",""),
+        #    contact.get("street1",""),
+        #    contact.get("street2",""),
+        #    contact.get("city",""),
+        #    contact.get("state",""),
+        #    contact.get("zip","")
+        #]
+        envelopePrinter.preview_envelope(sender, contact)
+        
+
+if __name__ == '__main__':
+    index_file = os.path.abspath('pages/index.html')
+    static_dir = os.path.abspath('.')  # base directory where /static/ lives
+
+    api = Api()
+    webview.create_window('Penguin Post', f'file://{index_file}', js_api=api,width=1500, height=900)
+    webview.start(http_server=True)
