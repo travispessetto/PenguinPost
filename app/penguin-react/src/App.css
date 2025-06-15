@@ -106,3 +106,19 @@ div#contact-body
 	flex: 1 1 auto;
 	overflow-y: scroll;
 }
+
+div#header-actions
+{
+ flex: 1 1 auto;
+ display: flex;
+ flex-direction: row;
+ align-items: center;
+ justify-content: right;
+ box-sizing: border-box;
+}
+
+div#header-actions > div
+{
+	cursor: pointer;
+	margin-left: 10px;
+}

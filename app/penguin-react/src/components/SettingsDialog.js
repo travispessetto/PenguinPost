@@ -1,37 +1,26 @@
 import Dialog from "./Dialog";
 import { useEffect, useState } from 'react';
 
-const ContactDialog = ({onClose,isOpen, onSaveContact,contact})=> {
-    const [id,setId] = useState(0);
+const SettingDialog = ({onClose,isOpen, onSaveSettings,contact})=> {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [phone, setPhone] = useState('');
 
-    const saveContact = ()=>
+    const saveSettings = ()=>
     {
-        onSaveContact(id, name, address, phone);
-        setName('');
-        setAddress('');
-        setPhone('');
+        onSaveSettings(name, address, phone);
     }
 
     useEffect(() => {
         if (contact) {
-            setId(contact.id || 0);
             setName(contact.name || '');
             setAddress(contact.address || '');
             setPhone(contact.number || '');
-        } else {
-            setId(0);
-            setName('');
-            setAddress('');
-            setPhone('');
         }
-    }
-    , [contact]);
+    }, [contact]);
 
     return (
-        <Dialog title={'Add Contact?'} onClose={onClose} isOpen={isOpen} onSave={saveContact}>
+        <Dialog title={'What\'s your contact details?'} onClose={onClose} isOpen={isOpen} onSave={saveSettings}>
             Name: <br />
             <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} /><br />
             Address: <br />
@@ -42,4 +31,4 @@ const ContactDialog = ({onClose,isOpen, onSaveContact,contact})=> {
     );
 }
 
-export default ContactDialog;
+export default SettingDialog;

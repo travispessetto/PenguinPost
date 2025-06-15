@@ -72,6 +72,11 @@ class EnvelopePrinter:
         :param output_path: optional output path
         :return: full path to generated PDF
         """
+        if isinstance(recipient, dict):
+                recipient = self.format_address(recipient)
+        print(f"Generating envelope for {recipient} from {sender}")
+        if isinstance(sender, dict):
+            sender = self.format_address(sender)
         path = output_path or tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
         self.create_pdf(sender, recipient, path)
         print(f"PDF generated at: {path}")
@@ -82,8 +87,6 @@ class EnvelopePrinter:
         Generate a PDF and immediately print it to the given printer.
         Accepts recipient as either a dict (raw contact) or list of lines.
         """
-        if isinstance(recipient, dict):
-            recipient = self.format_address(recipient)
 
         path = self.generate(sender, recipient)
         self.print_pdf(path, printer_index=printer_index)
@@ -101,7 +104,10 @@ class EnvelopePrinter:
 
         address = clean(address_dict.get("address", ""))
         if address:
-            lines.append(address)
+            for line in address.splitlines():
+                line = line.strip()
+                if line:
+                    lines.append(line)
 
         return lines
     
@@ -109,8 +115,7 @@ class EnvelopePrinter:
         """
         Generate a PDF envelope from the given contact and open it in the default PDF viewer.
         """
-        if isinstance(recipient, dict):
-                recipient = self.format_address(recipient)
+        
         path = self.generate(sender, recipient)
 
         # Determine platform-specific command
@@ -123,4 +128,4 @@ class EnvelopePrinter:
 
 def clean(text):
     # Remove non-printable characters and whitespace
-    return re.sub(r'[^\x20-\x7E]', '', text).strip()
+    return re.sub(r'[^(\x20-\x7E|\n|\r)]', '', text).strip()

@@ -17,22 +17,8 @@ class Api:
         printer_index = 0  # Default to the first printer
         if not (0 <= printer_index < len(printers)):
             raise IndexError(f"Invalid printer index: {printer_index}")
-        sender = [
-            "Travis Pessetto",
-            "123 Penguin Ln",
-            "Suite 7",
-            "Anchorage, AK 99501"
-        ]
+        sender = self.get_sender()
 
-
-        #recipient = [
-        #    contact.get("name",""),
-        #    contact.get("street1",""),
-        #    contact.get("street2",""),
-        #    contact.get("city",""),
-        #    contact.get("state",""),
-        #    contact.get("zip","")
-        #]
 
         envelopePrinter.generate_and_print(sender,contact)
 
@@ -46,6 +32,18 @@ class Api:
             conn.commit()
             return cursor.lastrowid  # return the new contact's ID
         
+    def update_contact(self, id, name, address, number):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE contacts
+                SET name = ?, address = ?, number = ?
+                WHERE id = ?
+            ''', (name, address, number, id))
+            conn.commit()
+            return cursor.rowcount
+
+        
     def delete_contact(self, contact_id):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -57,37 +55,70 @@ class Api:
     def get_contacts(self):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT id, name, address, number FROM contacts ORDER BY name')
+            cursor.execute('SELECT id, name, address, number FROM contacts WHERE self = 0 ORDER BY name')
             rows = cursor.fetchall()
             return [
                 {"id": r[0], "name": r[1], "address": r[2], "number": r[3]}
                 for r in rows
             ]
 
+    def get_my_contact(self):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, name, address, number FROM contacts WHERE self = 1')
+            row = cursor.fetchone()
+            if row:
+                return {"id": row[0], "name": row[1], "address": row[2], "number": row[3]}
+            return None
+        
+    def save_my_contact(self, name, address, number):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE contacts SET name = ?, address = ?, number = ? WHERE self = 1', (name, address, number))
+            if cursor.rowcount == 0:
+                # If no rows were updated, insert a new self contact
+                cursor.execute('INSERT INTO contacts (name, address, number, self) VALUES (?, ?, ?, 1)', (name, address, number))
+                return cursor.lastrowid  # return the new contact's ID
+            conn.commit()
+            return cursor.rowcount  # return number of rows updated
+
 
     def preview_envelope(self, contact):
         envelopePrinter = EnvelopePrinter()
-        sender = [
-            "Travis Pessetto",
-            "123 Penguin Ln",
-            "Suite 7",
-            "Anchorage, AK 99501"
-        ]
-        #recipient = [
-        #    contact.get("name",""),
-        #    contact.get("street1",""),
-        #    contact.get("street2",""),
-        #    contact.get("city",""),
-        #    contact.get("state",""),
-        #    contact.get("zip","")
-        #]
+        sender = self.get_sender()
         envelopePrinter.preview_envelope(sender, contact)
+
+    def get_sender(self):
+        sender = self.get_my_contact()
+        return {
+            "name": sender.get("name", ""),
+            "address": sender.get("address", ""),
+        }
+
+
+    def initialize_database(self):
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True) if os.path.dirname(self.db_path) else None
+
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS contacts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    address TEXT NOT NULL,
+                    number TEXT,
+                    self INTEGER NOT NULL DEFAULT 0
+                )
+            ''')
+            conn.commit()
         
 
 if __name__ == '__main__':
     index_file = os.path.abspath('penguin-react/build/index.html')
     static_dir = os.path.abspath('.')  # base directory where /static/ lives
+    
 
     api = Api()
+    api.initialize_database()  # Ensure the database is initialized
     webview.create_window('Penguin Post', f'file://{index_file}', js_api=api,width=1500, height=900)
     webview.start(http_server=True, debug=True)

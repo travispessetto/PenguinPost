@@ -3,10 +3,13 @@ import { IoPrint } from "react-icons/io5";
 import { PiFilePdf } from "react-icons/pi";
 import { CiEdit } from "react-icons/ci";
 import { FaRegTrashAlt } from "react-icons/fa";
+import ContactDialog from './ContactDialog';
 
 
-const Contact = ({id,name,address,number,onDeleteContact}) =>
+const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
 {
+    const addressLines = address.split(/\r\n|\r|\n/);
+    const [isDialogOpen,setIsDialogOpen] = React.useState(false);
     const previewEnvelope = () => {
         // Logic to preview PDF
         console.log("Preview PDF");
@@ -21,6 +24,12 @@ const Contact = ({id,name,address,number,onDeleteContact}) =>
         });
     }
 
+    const saveContact = (id, name, address, number) => {
+        onSaveContact(id, name, address, number);
+        setIsDialogOpen(false);
+    }
+
+
     const printEnvelope = () => {
         window.pywebview.api.print_envelope({
             name: name,
@@ -34,18 +43,26 @@ const Contact = ({id,name,address,number,onDeleteContact}) =>
     }
 
     return(
-        <div class="contact">
-            <div>{name}</div>
-            <div>{address}</div>
-            <div>{number}</div>
-            <div style={{fontSize: '20pt'}}>
-                <CiEdit /> 
-                <span onClick={previewEnvelope} style={{cursor: 'pointer'}}><PiFilePdf /></span>
-                <span onClick={printEnvelope} style={{cursor: 'pointer'}}><IoPrint /></span>
-                <span onClick={() => onDeleteContact(id)} style={{cursor: 'pointer'}}><FaRegTrashAlt /></span>
+        <>
+            <div class="contact">
+                <div>{name}</div>
+                <div>{addressLines.map((line,index)=><div key={index}>{line}</div>)}</div>
+                <div>{number}</div>
+                <div style={{fontSize: '20pt'}}>
+                    <span onClick={()=>setIsDialogOpen(true)}><CiEdit /></span>
+                    <span onClick={previewEnvelope} style={{cursor: 'pointer'}}><PiFilePdf /></span>
+                    <span onClick={printEnvelope} style={{cursor: 'pointer'}}><IoPrint /></span>
+                    <span onClick={() => onDeleteContact(id)} style={{cursor: 'pointer'}}><FaRegTrashAlt /></span>
+                </div>
+                    
             </div>
-                
-		</div>
+            <ContactDialog
+                isOpen={isDialogOpen}
+                onClose={()=>setIsDialogOpen(false)}
+                onSaveContact={saveContact}
+                contact={{id: id, name: name, address: address, number: number}}
+            />
+        </>
     );
 }
 
