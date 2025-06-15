@@ -4,12 +4,14 @@ import { PiFilePdf } from "react-icons/pi";
 import { CiEdit } from "react-icons/ci";
 import { FaRegTrashAlt } from "react-icons/fa";
 import ContactDialog from './ContactDialog';
+import DeleteContactDialog from './DeleteContactDialog';
 
 
 const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
 {
     const addressLines = address.split(/\r\n|\r|\n/);
     const [isDialogOpen,setIsDialogOpen] = React.useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
     const previewEnvelope = () => {
         // Logic to preview PDF
         console.log("Preview PDF");
@@ -52,7 +54,7 @@ const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
                     <span onClick={()=>setIsDialogOpen(true)}><CiEdit /></span>
                     <span onClick={previewEnvelope} style={{cursor: 'pointer'}}><PiFilePdf /></span>
                     <span onClick={printEnvelope} style={{cursor: 'pointer'}}><IoPrint /></span>
-                    <span onClick={() => onDeleteContact(id)} style={{cursor: 'pointer'}}><FaRegTrashAlt /></span>
+                    <span onClick={() => setIsDeleteDialogOpen(true)} style={{cursor: 'pointer'}}><FaRegTrashAlt /></span>
                 </div>
                     
             </div>
@@ -61,6 +63,12 @@ const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
                 onClose={()=>setIsDialogOpen(false)}
                 onSaveContact={saveContact}
                 contact={{id: id, name: name, address: address, number: number}}
+            />
+            <DeleteContactDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onDeleteContact={()=>{onDeleteContact(id); setIsDeleteDialogOpen(false);}}
+                contact={{id: id, name: name}}
             />
         </>
     );

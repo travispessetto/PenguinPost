@@ -1,7 +1,7 @@
 import './Dialog.css'; 
 import { FaTimes } from "react-icons/fa";
 
-const Dialog = ({title,children,onClose, isOpen, onSave}) => {
+const Dialog = ({title,children,onClose, isOpen, onSave, saveText}) => {
   return (
     <>
         <div className={`overlay ${isOpen ? '' : 'hidden' }`} onClick={onClose}></div>
@@ -12,7 +12,7 @@ const Dialog = ({title,children,onClose, isOpen, onSave}) => {
         </div>
         <div className='body'>{children}</div>
         <div className='footer'>
-            <button onClick={onSave}>Save</button>
+            <button onClick={onSave}>{saveText ?? 'Save'}</button>
         </div>
         </div>
     </>
