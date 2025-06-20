@@ -8,6 +8,7 @@ import { GoGear } from "react-icons/go";
 import { IoPrint } from "react-icons/io5";
 import { PiFilePdf } from "react-icons/pi";
 import SettingDialog from './components/SettingsDialog.js';
+import PrinterDialog from './components/PrinterDialog.js';
 
 function App() {
 
@@ -21,6 +22,7 @@ function App() {
   const [isAddContactDialogOpen, setIsAddContactDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [printers,setPrinters] = useState([]);
+  const [isPrinterDialogOpen, setIsPrinterDialogOpen] = useState(false);
 
   const onSaveContact = (id,name,address,phone) => {
 	console.log("Saving contact:", name, address, phone);
@@ -106,6 +108,17 @@ function App() {
     }
   };
 
+  const printAllEnvelopes = (printerIndex) => {
+	if (window.pywebview) {
+	  window.pywebview.api.print_all_envelopes(contacts, printerIndex).then((result) => {
+		console.log("All envelopes printed successfully:", result);
+		setIsPrinterDialogOpen(false);
+	  }).catch((error) => {
+		console.error("Error printing all envelopes:", error);
+	  });
+	}
+  }
+
   useEffect(()=>{
 	// Fetch contacts from the API
 	if(window.pywebview)
@@ -151,13 +164,19 @@ function App() {
 				onSaveSettings={onSaveSettings}
 				contact={myContact}
 			/>
+			<PrinterDialog
+				isOpen={isPrinterDialogOpen}
+				onClose={() => setIsPrinterDialogOpen(false)}
+				onPrint={printAllEnvelopes}
+				printers={printers}
+			/>
 			<div id="header">
 				<div>
 					<h1>Penguin Post</h1>
 				</div>
 				<div id="header-actions" style={{fontSize: '20pt'}}>
 					<div onClick={previewAllEnvelopes}><PiFilePdf /></div>
-					<div><IoPrint /></div>
+					<div onClick={()=>setIsPrinterDialogOpen(true)}><IoPrint /></div>
 					<div onClick={() => setIsSettingsDialogOpen(true)}><GoGear /></div>
 					<div onClick={() => setIsAddContactDialogOpen(true)}><FaPlus /></div>
 				</div>

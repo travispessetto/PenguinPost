@@ -121,7 +121,15 @@ class EnvelopePrinter:
         return merged_path
 
 
-
+    def generate_and_print_all(self, contacts, sender, printer_index=0):
+        """
+        Generate envelopes for all contacts and print them to the specified printer.
+        :param contacts: list of contact dicts or formatted address lists
+        :param sender: sender address as dict or list
+        :param printer_index: index of the printer to use
+        """
+        merged_path = self.generate_all(contacts, sender)
+        self.print_pdf(merged_path, printer_index=printer_index)
     
 
     def format_address(self, address_dict):
