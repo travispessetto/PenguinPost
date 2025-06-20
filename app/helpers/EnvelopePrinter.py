@@ -4,6 +4,7 @@ import subprocess
 import platform
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
+from PyPDF2 import PdfMerger
 
 class EnvelopePrinter:
     def __init__(self):
@@ -44,43 +45,46 @@ class EnvelopePrinter:
         c.save()
 
 
-    def list_printers(self):
+    def get_printers(self):
         result = subprocess.run(['lpstat', '-p'], capture_output=True, text=True)
         printers = []
-        for line in result.stdout.splitlines():
+        for idx, line in enumerate(result.stdout.splitlines()):
             if line.startswith("printer"):
                 parts = line.split()
                 if len(parts) >= 2:
-                    printers.append(parts[1])
+                    printers.append({
+                        "index": len(printers),  # Not `idx` to only count valid printers
+                        "name": parts[1]
+                    })
         return printers
-
+    
     def print_pdf(self, file_path, printer_index=0):
-        printers = self.list_printers()
+        printers = self.get_printers()
         if not printers:
             raise RuntimeError("No printers found.")
         if not (0 <= printer_index < len(printers)):
             raise IndexError(f"Invalid printer index: {printer_index}")
-        printer = printers[printer_index]
-        subprocess.run(['lp', '-d', printer, '-o', 'media=Custom.4.125x9.5in', file_path])
-        print(f"Printed to {printer}")
+        printer_name = printers[printer_index]['name']
+        subprocess.run(['lp', '-d', printer_name, '-o', 'media=Custom.4.125x9.5in', file_path])
+        print(f"Printed to {printer_name}")
+
 
     def generate(self, sender, recipient, output_path=None):
         """
         Generate a PDF envelope.
-        :param sender: list of sender address lines
-        :param recipient: list of recipient address lines
+        :param sender: dict or list of sender address lines
+        :param recipient: dict or list of recipient address lines
         :param output_path: optional output path
         :return: full path to generated PDF
         """
-        if isinstance(recipient, dict):
-                recipient = self.format_address(recipient)
-        print(f"Generating envelope for {recipient} from {sender}")
-        if isinstance(sender, dict):
-            sender = self.format_address(sender)
+        sender_lines = self.format_address(sender) if isinstance(sender, dict) else sender
+        recipient_lines = self.format_address(recipient) if isinstance(recipient, dict) else recipient
+
         path = output_path or tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
-        self.create_pdf(sender, recipient, path)
+        self.create_pdf(sender_lines, recipient_lines, path)
         print(f"PDF generated at: {path}")
         return path
+
     
     def generate_and_print(self, sender, recipient, printer_index=0):
         """
@@ -91,6 +95,32 @@ class EnvelopePrinter:
         path = self.generate(sender, recipient)
         self.print_pdf(path, printer_index=printer_index)
         return path
+    
+    def generate_all(self, contacts, sender):
+        """
+        Generate envelopes for all contacts and merge into a single PDF.
+        :param contacts: list of contact dicts or formatted address lists
+        :param sender: sender address as dict or list
+        :return: path to merged PDF
+        """
+        pdf_paths = []
+
+        for contact in contacts:
+            print(f"Generating envelope for {contact} from {sender}")
+            # Don't format here, just pass it through
+            path = self.generate(sender, contact)
+            pdf_paths.append(path)
+
+        merged_path = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
+        merger = PdfMerger()
+        for pdf in pdf_paths:
+            merger.append(pdf)
+        merger.write(merged_path)
+        merger.close()
+        print(f"Merged PDF generated at: {merged_path}")
+        return merged_path
+
+
 
     
 
@@ -110,6 +140,20 @@ class EnvelopePrinter:
                     lines.append(line)
 
         return lines
+    
+    def preview_all_envelopes(self, contacts, sender):
+        """
+        Generate PDF envelopes for all contacts and open them in the default PDF viewer.
+        """
+        merged_path = self.generate_all(contacts, sender)
+
+        # Determine platform-specific command
+        if platform.system() == "Darwin":
+            subprocess.run(["open", merged_path])
+        elif platform.system() == "Windows":
+            subprocess.run(["start", merged_path], shell=True)
+        else:  # Linux and others
+            subprocess.run(["xdg-open", merged_path])
     
     def preview_envelope(self, sender, recipient):
         """

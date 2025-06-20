@@ -5,13 +5,15 @@ import { CiEdit } from "react-icons/ci";
 import { FaRegTrashAlt } from "react-icons/fa";
 import ContactDialog from './ContactDialog';
 import DeleteContactDialog from './DeleteContactDialog';
+import PrinterDialog from './PrinterDialog';
 
 
-const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
+const Contact = ({id,name,address,number,onDeleteContact,onSaveContact,printers}) =>
 {
     const addressLines = address.split(/\r\n|\r|\n/);
     const [isDialogOpen,setIsDialogOpen] = React.useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+    const [isPrinterDialogOpen, setIsPrinterDialogOpen] = React.useState(false);
     const previewEnvelope = () => {
         // Logic to preview PDF
         console.log("Preview PDF");
@@ -32,12 +34,12 @@ const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
     }
 
 
-    const printEnvelope = () => {
+    const printEnvelope = (printerIndex) => {
         window.pywebview.api.print_envelope({
             name: name,
             address: address,
-        }).then((result) => {
-            console.log("PDF previewed successfully:", result);
+        },printerIndex).then((result) => {
+            setIsPrinterDialogOpen(false);
         }
         ).catch((error) => {
             console.error("Error previewing PDF:", error);
@@ -53,7 +55,7 @@ const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
                 <div style={{fontSize: '20pt'}}>
                     <span onClick={()=>setIsDialogOpen(true)}><CiEdit /></span>
                     <span onClick={previewEnvelope} style={{cursor: 'pointer'}}><PiFilePdf /></span>
-                    <span onClick={printEnvelope} style={{cursor: 'pointer'}}><IoPrint /></span>
+                    <span onClick={()=>{setIsPrinterDialogOpen(true)}} style={{cursor: 'pointer'}}><IoPrint /></span>
                     <span onClick={() => setIsDeleteDialogOpen(true)} style={{cursor: 'pointer'}}><FaRegTrashAlt /></span>
                 </div>
                     
@@ -69,6 +71,12 @@ const Contact = ({id,name,address,number,onDeleteContact,onSaveContact}) =>
                 onClose={() => setIsDeleteDialogOpen(false)}
                 onDeleteContact={()=>{onDeleteContact(id); setIsDeleteDialogOpen(false);}}
                 contact={{id: id, name: name}}
+            />
+            <PrinterDialog 
+                isOpen={isPrinterDialogOpen}
+                onClose={() => {setIsPrinterDialogOpen(false);}}
+                printers = {printers}
+                onPrint={printEnvelope}
             />
         </>
     );

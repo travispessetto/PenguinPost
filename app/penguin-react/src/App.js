@@ -1,11 +1,12 @@
 import side from './side.png';
 import './App.css';
 import Contact from './components/Contact.js';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaPlus } from "react-icons/fa";
-import Dialog from './components/Dialog.js';
 import ContactDialog from './components/ContactDialog.js';
 import { GoGear } from "react-icons/go";
+import { IoPrint } from "react-icons/io5";
+import { PiFilePdf } from "react-icons/pi";
 import SettingDialog from './components/SettingsDialog.js';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
   });
   const [isAddContactDialogOpen, setIsAddContactDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+  const [printers,setPrinters] = useState([]);
 
   const onSaveContact = (id,name,address,phone) => {
 	console.log("Saving contact:", name, address, phone);
@@ -94,6 +96,16 @@ function App() {
 		}
   }
 
+  const previewAllEnvelopes = () => {
+    if (window.pywebview) {
+      window.pywebview.api.preview_all_envelopes(contacts).then((result) => {
+        console.log("All envelopes previewed successfully:", result);
+      }).catch((error) => {
+        console.error("Error previewing all envelopes:", error);
+      });
+    }
+  };
+
   useEffect(()=>{
 	// Fetch contacts from the API
 	if(window.pywebview)
@@ -111,6 +123,14 @@ function App() {
 			setMyContact(result);
 		}).catch((error) => {
 			console.error("Error fetching my contact:", error);
+		});
+
+		// get the printers
+		window.pywebview.api.get_printers().then((result) => {
+			console.log("Printers fetched successfully:", result);
+			setPrinters(result);
+		}).catch((error) => {
+			console.error("Error fetching printers:", error);
 		});
 	}
   },[]);
@@ -136,6 +156,8 @@ function App() {
 					<h1>Penguin Post</h1>
 				</div>
 				<div id="header-actions" style={{fontSize: '20pt'}}>
+					<div onClick={previewAllEnvelopes}><PiFilePdf /></div>
+					<div><IoPrint /></div>
 					<div onClick={() => setIsSettingsDialogOpen(true)}><GoGear /></div>
 					<div onClick={() => setIsAddContactDialogOpen(true)}><FaPlus /></div>
 				</div>
@@ -149,7 +171,7 @@ function App() {
 						<div>Name</div>
 						<div>Address</div>
 						<div>Phone #</div>
-						<div>[All PDF] [ALL Print]</div>
+						<div></div>
 					</div>
 					<div id="contact-body">
 						
@@ -162,8 +184,15 @@ function App() {
 						number={contact.number}
 						onDeleteContact={onDeleteContact}
 						onSaveContact={onSaveContact}
+						printers={printers}
 					/>
 			))}
+			<div id='contact-filler'>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
 					</div>{/*End contact body*/}
 					
 					

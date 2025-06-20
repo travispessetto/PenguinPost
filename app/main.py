@@ -9,18 +9,17 @@ class Api:
     def greet_user(self, name):
         return f"Hello, {name}!"
     
-    def print_envelope(self,contact):
+    def print_envelope(self,contact,printer_index=-1):
         envelopePrinter = EnvelopePrinter()
-        printers = envelopePrinter.list_printers()
+        printers = envelopePrinter.get_printers()
         if not printers:
             raise RuntimeError("No printers found.")
-        printer_index = 0  # Default to the first printer
         if not (0 <= printer_index < len(printers)):
             raise IndexError(f"Invalid printer index: {printer_index}")
         sender = self.get_sender()
 
 
-        envelopePrinter.generate_and_print(sender,contact)
+        envelopePrinter.generate_and_print(sender,contact,printer_index)
 
     def add_contact(self, name, address, number):
         with sqlite3.connect(self.db_path) as conn:
@@ -88,6 +87,14 @@ class Api:
         sender = self.get_sender()
         envelopePrinter.preview_envelope(sender, contact)
 
+    def preview_all_envelopes(self,contacts):
+        envelopePrinter = EnvelopePrinter()
+
+        print('contacts', contacts)
+
+        sender = self.get_sender()
+        envelopePrinter.preview_all_envelopes(contacts,sender)
+
     def get_sender(self):
         sender = self.get_my_contact()
         return {
@@ -111,6 +118,10 @@ class Api:
                 )
             ''')
             conn.commit()
+
+    def get_printers(self):
+        envelopePrinter = EnvelopePrinter()
+        return envelopePrinter.get_printers()
         
 
 if __name__ == '__main__':
@@ -120,5 +131,6 @@ if __name__ == '__main__':
 
     api = Api()
     api.initialize_database()  # Ensure the database is initialized
-    webview.create_window('Penguin Post', f'file://{index_file}', js_api=api,width=1500, height=900)
+    # webview.create_window('Penguin Post', f'file://{index_file}', js_api=api,width=1500, height=900)
+    webview.create_window('Penguin Post', f'http://localhost:3000', js_api=api,width=1500, height=900)
     webview.start(http_server=True, debug=True)
